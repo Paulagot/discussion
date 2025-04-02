@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { generateReport } from './GenerateReport.jsx';
 import { triggerGenerateReport } from './../api.js'; // Adjust path as needed
+import { toggleQuestionInput, startDiscussion, sortQuestions } from './../api.js'; // Adjust path as needed
 
 const AdminPanel = ({
   sessionCode,
@@ -16,7 +17,15 @@ const AdminPanel = ({
   setReportGenerated,
   guestName,
   onGrabAttention,
-  sessionId
+  sessionId,
+  isQuestionInputEnabled,
+    setIsQuestionInputEnabled,
+    isDiscussionStarted,
+    setIsDiscussionStarted,
+    isQuestionsSorted,
+    setIsQuestionsSorted,
+
+
 }) => {
   const [minutes, setMinutes] = useState(5);
   const [isEnding, setIsEnding] = useState(false);
@@ -70,6 +79,37 @@ const AdminPanel = ({
     }
   };
 
+  const handleToggleQuestionInput = async () => {
+    try {
+      const newEnabledState = !isQuestionInputEnabled;
+      await toggleQuestionInput(sessionId, newEnabledState);
+      setIsQuestionInputEnabled(newEnabledState);
+    } catch (err) {
+      console.error("Error toggling question input:", err);
+      alert("Failed to toggle question input.");
+    }
+  };
+
+  const handleStartDiscussion = async () => {
+    try {
+      await startDiscussion(sessionId);
+      setIsDiscussionStarted(true);
+    } catch (err) {
+      console.error("Error starting discussion:", err);
+      alert("Failed to start discussion.");
+    }
+  };
+
+  const handleSortQuestions = async () => {
+    try {
+      await sortQuestions(sessionId);
+      setIsQuestionsSorted(true);
+    } catch (err) {
+      console.error("Error sorting questions:", err);
+      alert("Failed to sort questions.");
+    }
+  };
+
   return (
     <div className="admin-panel">
       <div className="session-info">
@@ -95,6 +135,31 @@ const AdminPanel = ({
         </button>
 
         <div className="admin-actions">
+        {!isQuestionsSorted && (
+    <button
+      type="button"
+      onClick={handleToggleQuestionInput}
+      disabled={isEnding || isGenerating}
+    >
+      {isQuestionInputEnabled ? "Disable Question Input" : "Enable Question Input"}
+    </button>
+  )}
+  {/* Comment out Start Discussion for now */}
+  {/* <button
+    type="button"
+    onClick={handleStartDiscussion}
+    disabled={isDiscussionStarted || isEnding || isGenerating}
+  >
+    Start Discussion
+  </button> */}
+  <button
+    type="button"
+    onClick={handleSortQuestions}
+    disabled={isQuestionsSorted || isEnding || isGenerating}
+  >
+    Sort Questions
+  </button>
+
           <button
             type="button"
             className="generate-report-button"

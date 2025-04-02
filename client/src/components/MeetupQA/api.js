@@ -223,3 +223,26 @@ export const triggerGenerateReport = async (sessionId) => {
     `${API_BASE_URL}/meetup_qa/meetupQA/${sessionId}/generate-report`
   );
 };
+
+// api.js
+export const toggleQuestionInput = async (sessionId, enabled) => {
+  return apiCall(
+    'PUT',
+    `${API_BASE_URL}/meetup_qa/meetupQA/${sessionId}/toggle-question-input`,
+    { enabled }
+  );
+};
+
+export const startDiscussion = async (sessionId) => {
+  return apiCall(
+    'PUT',
+    `${API_BASE_URL}/meetup_qa/meetupQA/${sessionId}/start-discussion`
+  );
+};
+
+export const sortQuestions = async (sessionId) => {
+  return apiCall(
+    'PUT',
+    `${API_BASE_URL}/meetup_qa/meetupQA/${sessionId}/sort-questions`
+  );
+};

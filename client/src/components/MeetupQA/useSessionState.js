@@ -41,6 +41,11 @@ export function useSessionState() {
   
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
+
+  // New states for your features
+  const [isQuestionInputEnabled, setIsQuestionInputEnabled] = useState(true); // Default: enabled
+  const [isDiscussionStarted, setIsDiscussionStarted] = useState(false); // Default: not started
+  const [isQuestionsSorted, setIsQuestionsSorted] = useState(false); // Default: not sorted
   
   // Load session from localStorage on mount
   useEffect(() => {
@@ -135,6 +140,12 @@ export function useSessionState() {
     setReportGenerated, // NEW
     generateNewCode,
     saveSessionToStorage,
-    clearSessionFromStorage
+    clearSessionFromStorage,
+    isQuestionInputEnabled,
+    setIsQuestionInputEnabled,
+    isDiscussionStarted,
+    setIsDiscussionStarted,
+    isQuestionsSorted,
+    setIsQuestionsSorted,
   };
 }

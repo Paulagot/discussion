@@ -1,5 +1,4 @@
 // usePolling.js
-// usePolling.js
 import { useRef, useEffect, useCallback } from 'react';
 import { fetchSessionData } from './api';
 
@@ -36,7 +35,15 @@ export function usePolling({
   replies,
   setReplies,
   setReportGenerated,
-  playAudio
+  playAudio,
+  // Add new parameters
+  isQuestionInputEnabled,
+  setIsQuestionInputEnabled,
+  isDiscussionStarted,
+  setIsDiscussionStarted,
+  isQuestionsSorted,
+  setIsQuestionsSorted,
+  forceRefresh,
 }) {
   const pollIntervalRef = useRef(null);
   const isPollingRef = useRef(false);
@@ -170,11 +177,19 @@ export function usePolling({
         }
       }
 
-      // New: Sync reportGenerated from server for all clients
       if (data.reportGenerated !== undefined && data.reportGenerated !== reportGenerated) {
-        const normalizedReportGenerated = !!data.reportGenerated; // Converts 0 to false, 1 to true
-        // console.log('Polling updating reportGenerated:', data.reportGenerated, 'normalized to:', normalizedReportGenerated);
-        setReportGenerated(normalizedReportGenerated);
+        setReportGenerated(data.reportGenerated);
+      }
+
+      // Sync new state variables
+      if (forceUpdate || data.isQuestionInputEnabled !== isQuestionInputEnabled) {
+        setIsQuestionInputEnabled(data.isQuestionInputEnabled !== undefined ? data.isQuestionInputEnabled : true);
+      }
+      if (forceUpdate || data.isDiscussionStarted !== isDiscussionStarted) {
+        setIsDiscussionStarted(data.isDiscussionStarted !== undefined ? data.isDiscussionStarted : false);
+      }
+      if (forceUpdate || data.isQuestionsSorted !== isQuestionsSorted) {
+        setIsQuestionsSorted(data.isQuestionsSorted !== undefined ? data.isQuestionsSorted : false);
       }
 
       setError('');
@@ -195,14 +210,45 @@ export function usePolling({
       isPollingRef.current = false;
     }
   }, [
-    sessionCode, isJoined, guestName, participants, questions,
-    activeQuestion, finishedQuestions, replies, timeVotes, hasVoted,
-    showTimeVote, isAdmin, timer, reportGenerated,
-    setParticipants, setRemainingVotes, setTimer, setShowTimeVote,
-    setTimeVotes, setHasVoted, setQuestions, setActiveQuestion,
-    setFinishedQuestions, setError, setSessionActive,
-    clearSessionFromStorage, setIsJoined, setSessionCode, setShowStartModal,
-    setReplies, setReportGenerated, playAudio
+    sessionCode,
+    isJoined,
+    guestName,
+    participants,
+    questions,
+    activeQuestion,
+    finishedQuestions,
+    replies,
+    timeVotes,
+    hasVoted,
+    showTimeVote,
+    isAdmin,
+    timer,
+    reportGenerated,
+    setParticipants,
+    setRemainingVotes,
+    setTimer,
+    setShowTimeVote,
+    setTimeVotes,
+    setHasVoted,
+    setQuestions,
+    setActiveQuestion,
+    setFinishedQuestions,
+    setError,
+    setSessionActive,
+    clearSessionFromStorage,
+    setIsJoined,
+    setSessionCode,
+    setShowStartModal,
+    setReplies,
+    setReportGenerated,
+    playAudio,
+    // Add new dependencies
+    isQuestionInputEnabled,
+    setIsQuestionInputEnabled,
+    isDiscussionStarted,
+    setIsDiscussionStarted,
+    isQuestionsSorted,
+    setIsQuestionsSorted,
   ]);
 
   useEffect(() => {

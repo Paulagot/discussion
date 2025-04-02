@@ -165,54 +165,54 @@ meetupQARouter.post('/meetupQA/:sessionId/generate-report', (req, res) => {
 meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
   const { code } = req.params;
   const participantName = req.query.participant_name;
-  
-  // console.log(`Fetching session data for code: ${code}, participant: ${participantName}`);
-  
+
+  // Query to fetch session details
   const query = `
     SELECT * FROM meetupqa
     WHERE session_code = ? AND is_active = TRUE
   `;
-  
+
   pool.query(query, [code], (err, results) => {
     if (err) {
       console.error('Database query error:', err);
       return res.status(500).json({ error: 'Database error', details: err });
     }
-    
+
     if (results.length === 0) {
       return res.status(404).json({ error: 'Session not found or inactive' });
     }
-    
+
     const session = results[0];
-    
+
     let remainingSeconds = null;
     let isTimeVoteActive = session.time_vote_active || false;
-    
+
     if (session.timer_end_timestamp && !isTimeVoteActive) {
       const endTime = new Date(session.timer_end_timestamp).getTime();
       const currentTime = Date.now();
       remainingSeconds = Math.max(0, Math.floor((endTime - currentTime) / 1000));
-      // console.log(`Server timer calc: end=${session.timer_end_timestamp}, now=${new Date(currentTime)}, remaining=${remainingSeconds}`);
       if (remainingSeconds === 0 && session.timer_end_timestamp) {
-         pool.query(
+        pool.query(
           'UPDATE meetupqa SET time_vote_active = TRUE WHERE session_id = ? AND time_vote_active = FALSE',
           [session.session_id]
         );
         isTimeVoteActive = true;
       }
     }
-    
+
+    // Fetch participants
     const participantsQuery = `
       SELECT * FROM session_participants
       WHERE session_id = ?
     `;
-    
+
     pool.query(participantsQuery, [session.session_id], (partErr, participants) => {
       if (partErr) {
         console.error('Error getting participants:', partErr);
         return res.status(500).json({ error: 'Error getting participants' });
       }
-      
+
+      // Fetch pending questions
       const questionsQuery = `
         SELECT 
           q.*,
@@ -221,50 +221,54 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
         WHERE q.session_id = ? AND q.status = 'pending'
         ORDER BY votes DESC
       `;
-      
+
       pool.query(questionsQuery, [session.session_id], (qErr, questions) => {
         if (qErr) {
           console.error('Error getting questions:', qErr);
           return res.status(500).json({ error: 'Error getting questions' });
         }
-        
+
+        // Fetch active question
         const activeQuery = `
           SELECT * FROM session_questions
           WHERE session_id = ? AND status = 'active'
         `;
-        
+
         pool.query(activeQuery, [session.session_id], (activeErr, activeQuestions) => {
           if (activeErr) {
             console.error('Error getting active question:', activeErr);
             return res.status(500).json({ error: 'Error getting active question' });
           }
-          
+
+          // Fetch finished questions
           const finishedQuery = `
             SELECT * FROM session_questions
             WHERE session_id = ? AND status = 'finished'
             ORDER BY updated_at DESC
           `;
-          
+
           pool.query(finishedQuery, [session.session_id], (finishedErr, finishedQuestions) => {
             if (finishedErr) {
               console.error('Error getting finished questions:', finishedErr);
               return res.status(500).json({ error: 'Error getting finished questions' });
             }
-            
+
+            // Fetch replies
             const repliesQuery = `
               SELECT * FROM question_replies
               WHERE session_id = ?
               ORDER BY created_at ASC
             `;
-            
+
             pool.query(repliesQuery, [session.session_id], (repliesErr, repliesResults) => {
               if (repliesErr) {
                 console.error('Error getting replies:', repliesErr);
                 return res.status(500).json({ error: 'Error getting replies' });
               }
-              
+
               const replies = repliesResults || [];
-              
+
+              // Handle time vote info if active
               if (isTimeVoteActive) {
                 const votesQuery = `
                   SELECT vote_value, COUNT(*) as count
@@ -272,36 +276,35 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
                   WHERE session_id = ?
                   GROUP BY vote_value
                 `;
-                
+
                 pool.query(votesQuery, [session.session_id], (votesErr, votesResults) => {
                   if (votesErr) {
                     console.error('Error getting time votes:', votesErr);
                     return res.status(500).json({ error: 'Error getting time votes' });
                   }
-                  
+
                   const votesCounts = { yes: 0, no: 0 };
                   for (const row of votesResults) {
-                      if (row.vote_value === 'yes') votesCounts.yes = row.count;
-                      if (row.vote_value === 'no') votesCounts.no = row.count;
+                    if (row.vote_value === 'yes') votesCounts.yes = row.count;
+                    if (row.vote_value === 'no') votesCounts.no = row.count;
                   }
-                  
+
                   if (participantName) {
                     const participantVoteQuery = `
                       SELECT 1 FROM time_extension_votes
                       WHERE session_id = ? AND participant_name = ?
                       LIMIT 1
                     `;
-                    
-                    pool.query(participantVoteQuery, [session.session_id, participantName], 
-                      (pvErr, pvResults) => {
-                        if (pvErr) {
-                          console.error('Error checking participant vote:', pvErr);
-                          return res.status(500).json({ error: 'Error checking participant vote' });
-                        }
-                        
-                        const hasVoted = pvResults.length > 0;
-                        completeResponse(replies, votesCounts, hasVoted);
-                      });
+
+                    pool.query(participantVoteQuery, [session.session_id, participantName], (pvErr, pvResults) => {
+                      if (pvErr) {
+                        console.error('Error checking participant vote:', pvErr);
+                        return res.status(500).json({ error: 'Error checking participant vote' });
+                      }
+
+                      const hasVoted = pvResults.length > 0;
+                      completeResponse(replies, votesCounts, hasVoted);
+                    });
                   } else {
                     completeResponse(replies, votesCounts, false);
                   }
@@ -309,7 +312,8 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
               } else {
                 completeResponse(replies, { yes: 0, no: 0 }, false);
               }
-              
+
+              // Function to send the final response
               function completeResponse(replies, timeVotes, hasVoted) {
                 const responseWithTimer = {
                   session,
@@ -321,16 +325,19 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
                   timerInfo: {
                     remainingSeconds,
                     isTimeVoteActive,
-                    timerDurationSeconds: session.timer_duration_seconds || 0
+                    timerDurationSeconds: session.timer_duration_seconds || 0,
                   },
                   timeVoteInfo: {
                     votes: timeVotes,
-                    hasVoted
+                    hasVoted,
                   },
-                  grabAttentionTriggered: session.grab_attention_triggered, // Add this
-                  reportGenerated: session.report_generated 
+                  grabAttentionTriggered: session.grab_attention_triggered,
+                  reportGenerated: session.report_generated,
+                  // New fields added here
+                  isQuestionInputEnabled: session.is_question_input_enabled,
+                  isDiscussionStarted: session.is_discussion_started,
+                  isQuestionsSorted: session.is_questions_sorted,
                 };
-                // console.log('Sending response:', responseWithTimer);
                 res.status(200).json(responseWithTimer);
               }
             });
@@ -1358,6 +1365,70 @@ meetupQARouter.delete('/meetupQA/:session_id/questions/:question_id/replies/:rep
         res.status(200).json({ message: 'Reply deleted successfully' });
       });
     });
+  });
+});
+
+// Toggle question input
+meetupQARouter.put('/meetupQA/:sessionId/toggle-question-input', (req, res) => {
+  const { sessionId } = req.params;
+  const { enabled } = req.body;
+
+  const query = `
+    UPDATE meetupqa
+    SET is_question_input_enabled = ?
+    WHERE session_id = ? AND is_active = TRUE
+  `;
+  pool.query(query, [enabled, sessionId], (err, result) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).json({ error: 'Database error', details: err });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Session not found or inactive' });
+    }
+    res.json({ success: true, isQuestionInputEnabled: enabled });
+  });
+});
+
+// Start discussion
+meetupQARouter.put('/meetupQA/:sessionId/start-discussion', (req, res) => {
+  const { sessionId } = req.params;
+
+  const query = `
+    UPDATE meetupqa
+    SET is_discussion_started = TRUE
+    WHERE session_id = ? AND is_active = TRUE
+  `;
+  pool.query(query, [sessionId], (err, result) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).json({ error: 'Database error', details: err });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Session not found or inactive' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// Sort questions
+meetupQARouter.put('/meetupQA/:sessionId/sort-questions', (req, res) => {
+  const { sessionId } = req.params;
+
+  const query = `
+    UPDATE meetupqa
+    SET is_questions_sorted = TRUE
+    WHERE session_id = ? AND is_active = TRUE
+  `;
+  pool.query(query, [sessionId], (err, result) => {
+    if (err) {
+      console.error('Database query error:', err);
+      return res.status(500).json({ error: 'Database error', details: err });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Session not found or inactive' });
+    }
+    res.json({ success: true });
   });
 });
 

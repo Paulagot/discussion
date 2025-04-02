@@ -89,6 +89,12 @@ const MeetupQA = () => {
     generateNewCode,
     saveSessionToStorage,
     clearSessionFromStorage,
+    isQuestionInputEnabled,
+    setIsQuestionInputEnabled,
+    isDiscussionStarted,
+    setIsDiscussionStarted,
+    isQuestionsSorted,
+    setIsQuestionsSorted,
   } = sessionState;
 
   const hasFetchedInitialData = useRef(false);
@@ -197,6 +203,17 @@ const MeetupQA = () => {
     setReportGenerated(data.reportGenerated);
   }
 
+   // New state updates
+   if (data.isQuestionInputEnabled !== undefined) {
+    setIsQuestionInputEnabled(data.isQuestionInputEnabled);
+  }
+  if (data.isDiscussionStarted !== undefined) {
+    setIsDiscussionStarted(data.isDiscussionStarted);
+  }
+  if (data.isQuestionsSorted !== undefined) {
+    setIsQuestionsSorted(data.isQuestionsSorted);
+  }
+
         setError('');
       } catch (err) {
         console.error("Fetch error details:", err);
@@ -248,6 +265,10 @@ const MeetupQA = () => {
       setIsJoined,
       setShowStartModal,
       setReportGenerated,
+      setIsQuestionInputEnabled,
+      setIsDiscussionStarted,
+      setIsQuestionsSorted,
+    
     ]
   );
 
@@ -284,6 +305,12 @@ const MeetupQA = () => {
     setReplies,
     setReportGenerated,
     playAudio,
+    isQuestionInputEnabled,
+    setIsQuestionInputEnabled,
+    isDiscussionStarted,
+    setIsDiscussionStarted,
+    isQuestionsSorted,
+    setIsQuestionsSorted,
     forceRefresh: () => fetchSessionDataFromServer(sessionCode),
   });
 
@@ -635,74 +662,88 @@ const MeetupQA = () => {
     />
   );
 
-  const sortedQuestions = [...questions].sort((a, b) => b.votes - a.votes);
-  return (
-    <main className="container__right" id="main">
-      <div className="meetup-qa-container">
-        {error && <div className="error-message">{error}</div>}
+  const displayedQuestions = isQuestionsSorted
+  ? [...questions].sort((a, b) => b.votes - a.votes)
+  : questions;
 
-        {isAdmin && (
-          <AdminPanel
-            sessionCode={sessionCode}
-            onSetTimer={handleSetTimer}
-            timer={timer}
-            participants={participants}
-            onEndSession={handleEndSession}
-            questions={questions}
-            activeQuestion={activeQuestion}
-            finishedQuestions={finishedQuestions}
-            replies={replies}
-            setReportGenerated={setReportGenerated}
-            guestName={guestName}
-            onGrabAttention={handleGrabAttention}
-            sessionId={sessionId}
-          />
-        )}
-        <div className="download-report-button-container">
-        {reportGenerated && (
-        <button type="button" className='download-report-button' onClick={() => generateReport({ sessionCode, participants, questions, activeQuestion, finishedQuestions, replies, hostName: guestName, isAdmin })}>
-          Download Report
-        </button>
-      )}
-        </div>
+return (
+  <main className="container__right" id="main">
+    <div className="meetup-qa-container">
+      {error && <div className="error-message">{error}</div>}
 
-        <ParticipantsList
+      {isAdmin && (
+        <AdminPanel
+          sessionCode={sessionCode}
+          onSetTimer={handleSetTimer}
+          timer={timer}
           participants={participants}
-          isAdmin={isAdmin}
-          onSetModerator={handleSetModerator}
-          onRemoveParticipant={handleRemoveParticipant}
+          onEndSession={handleEndSession}
+          questions={questions}
+          activeQuestion={activeQuestion}
+          finishedQuestions={finishedQuestions}
+          replies={replies}
+          setReportGenerated={setReportGenerated}
+          guestName={guestName}
+          onGrabAttention={handleGrabAttention}
+          sessionId={sessionId}
+          isQuestionInputEnabled={isQuestionInputEnabled}
+          setIsQuestionInputEnabled={setIsQuestionInputEnabled}
+          isDiscussionStarted={isDiscussionStarted}
+          setIsDiscussionStarted={setIsDiscussionStarted}
+          isQuestionsSorted={isQuestionsSorted}
+          setIsQuestionsSorted={setIsQuestionsSorted}
         />
-
-
-
-        {!reportGenerated && (
-          <div className="meetup-qa-questions">
-            <AddQuestionForm onAddQuestion={handleAddQuestion} />
-          </div>
+      )}
+      <div className="download-report-button-container">
+        {reportGenerated && (
+          <button
+            type="button"
+            className="download-report-button"
+            onClick={() => generateReport({ sessionCode, participants, questions, activeQuestion, finishedQuestions, replies, hostName: guestName, isAdmin })}
+          >
+            Download Report
+          </button>
         )}
+      </div>
 
-        <div className="meetup-qa-main">
-          <div className="meetup-qa-unanswered">
-            <h2 className="meetup-qa-unanswered-header">Questions ({sortedQuestions.length})</h2>
-            <QuestionsList
-              questions={sortedQuestions}
-              onVote={handleVoteQuestion}
-              onEdit={handleEditQuestion}
-              onDelete={handleDeleteQuestion}
-              onSetActive={isAdmin ? handleSetActive : null}
-              currentUser={guestName}
-              remainingVotes={remainingVotes}
-              isAdmin={isAdmin}
-              isModerator={isModerator}
-            />
+      <ParticipantsList
+        participants={participants}
+        isAdmin={isAdmin}
+        onSetModerator={handleSetModerator}
+        onRemoveParticipant={handleRemoveParticipant}
+      />
+
+      {!reportGenerated && isQuestionInputEnabled && !isQuestionsSorted && (
+        <div className="meetup-qa-questions">
+          <AddQuestionForm onAddQuestion={handleAddQuestion} />
+        </div>
+      )}
+
+      <div className="meetup-qa-main">
+        <div className="meetup-qa-unanswered">
+          <h2 className="meetup-qa-unanswered-header">Questions ({displayedQuestions.length})</h2>
+          <QuestionsList
+            questions={displayedQuestions}
+            onVote={handleVoteQuestion}
+            onEdit={handleEditQuestion}
+            onDelete={handleDeleteQuestion}
+            onSetActive={isAdmin ? handleSetActive : null}
+            currentUser={guestName}
+            remainingVotes={remainingVotes}
+            isAdmin={isAdmin}
+            isModerator={isModerator}
+          />
+          {isQuestionsSorted && (
             <div className="meetup-qa-finished">
               <h2 className="meetup-qa-finished-header">
                 Answered Questions ({finishedQuestions.length})
               </h2>
               <FinishedQuestions questions={finishedQuestions} replies={replies} />
             </div>
-          </div>
+          )}
+        </div>
 
+        {isQuestionsSorted && (
           <div className="meetup-qa-active" id="active-question-area">
             <ActiveQuestion
               question={activeQuestion}
@@ -726,10 +767,11 @@ const MeetupQA = () => {
               />
             )}
           </div>
-        </div>
+        )}
       </div>
-    </main>
-  );
+    </div>
+  </main>
+);
 };
 
 export default MeetupQA;

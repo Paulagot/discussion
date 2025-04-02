@@ -695,7 +695,7 @@
   }
   
   .replies-list {
-    max-height: 200px; 
+    
     overflow-y: auto;
     padding: var(--spacing-xs);
   }

@@ -49,6 +49,17 @@ const ActiveQuestion = ({
           <div className="active-question-timer">
             {getTimerDisplay()}
           </div>
+          
+          <div className="active-question-card">
+            <div className="active-question-text">
+              {question.text}
+            </div>
+            <div className="active-question-author">
+              Asked by {question.author}
+            </div>
+          </div>
+
+
           <QuestionReplies
             questionId={question.id}
             sessionId={question.sessionId}
@@ -61,14 +72,7 @@ const ActiveQuestion = ({
             onDeleteReply={onDeleteReply}
           />
 
-          <div className="active-question-card">
-            <div className="active-question-text">
-              {question.text}
-            </div>
-            <div className="active-question-author">
-              Asked by {question.author}
-            </div>
-          </div>
+         
         </>
       ) : (
         <div className="no-active-question">
