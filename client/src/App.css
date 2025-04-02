@@ -1,0 +1,996 @@
+/* MeetupQA Stylesheet - Optimized Version */
+
+/* ==========================================
+   CSS Variables (Custom Properties)
+   ========================================== */
+   :root {
+    /* Color palette */
+    --color-primary: #003f91;
+    --color-primary-dark: #003d99;
+    --color-primary-light: rgba(0, 82, 204, 0.1);
+    --color-secondary: #285c41;
+    --color-accent: #ffffcc;
+    --color-active-question: #e6f7ff;
+    --color-finished-question: lightskyblue;
+    
+    /* Status colors */
+    --color-success: #4CAF50;
+    --color-success-dark: #36B37E;
+    --color-warning: #d4a017;
+    --color-danger: #FF5630;
+    --color-danger-dark: #f44336;
+    --color-danger-light: #e6492c;
+    
+    /* Neutral colors */
+    --color-text: #333;
+    --color-text-light: #666;
+    --color-text-lighter: #999;
+    --color-background: white;
+    --color-background-light: #f9f9f9;
+    --color-background-lighter: #f5f5f5;
+    --color-border: #ddd;
+    --color-border-light: #eee;
+    --color-inactive: #9e9e9e;
+    
+    /* Sizing variables */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --spacing-xs: 5px;
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 30px;
+    
+    /* Typography */
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 18px;
+    --font-size-lg: 20px;
+    --font-size-xl: 25px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-xxl: 0 4px 20px rgba(0, 0, 0, 0.2);
+    
+    /* Z-indices */
+    --z-index-modal: 1000;
+    --z-index-overlay: 100;
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+  }
+  
+  /* ==========================================
+     Global Layout & Components
+     ========================================== */
+  .meetup-qa-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: var(--color-text);
+  }
+  
+  .meetup-qa-main {
+    display: flex;
+    flex: 1;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+  }
+  
+  .meetup-qa-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: var(--font-size-md);
+    color: var(--color-primary);
+  }
+  
+  /* ==========================================
+     Button Styles
+     ========================================== */
+  /* Primary button */
+  .primary-button, 
+  .join-form button, 
+  .set-timer-button, 
+  .start-button, 
+  .add-question-form button {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-normal);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .primary-button:hover, 
+  .join-form button:hover, 
+  .set-timer-button:hover, 
+  .start-button:hover, 
+  .add-question-form button:hover {
+    background-color: var(--color-primary-dark);
+  }
+  
+  /* Success button */
+  .success-button, 
+  .post-button, 
+  .save-button, 
+  .yes-button {
+    background-color: var(--color-success);
+    color: var(--color-background);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+  }
+  
+  .success-button:hover, 
+  .post-button:hover, 
+  .save-button:hover, 
+  .yes-button:hover {
+    opacity: 0.9;
+  }
+  
+  /* Danger button */
+  .danger-button, 
+  .cancel-button, 
+  .no-button, 
+  .end-session-button {
+    background-color: var(--color-danger);
+    color: var(--color-background);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+  }
+  
+  .danger-button:hover, 
+  .cancel-button:hover, 
+  .no-button:hover, 
+  .end-session-button:hover {
+    background-color: var(--color-danger-light);
+  }
+  
+  /* Disabled button */
+  .post-button:disabled, 
+  .save-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  /* ==========================================
+     Form Elements
+     ========================================== */
+  input, textarea, .edit-input, .reply-input {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  textarea, .edit-textarea {
+    resize: vertical;
+    font-family: inherit;
+  }
+  
+  /* ==========================================
+     Join Form
+     ========================================== */
+  .join-form {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: var(--spacing-xl);
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .join-form h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-primary);
+  }
+  
+  .join-form input {
+    width: 95%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  .join-form button {
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    margin-left: 0px;
+  }
+  
+  /* ==========================================
+     Admin Panel
+     ========================================== */
+  .admin-panel {
+    background-color: var(--color-background-lighter);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+  }
+  
+  .admin-panel h2 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+  
+  .session-code {
+    font-size: var(--font-size-md);
+    background-color: #e0e0e0;
+    padding: var(--spacing-sm) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    margin: var(--spacing-sm) 0;
+    display: inline-block;
+  }
+  
+  .session-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .copy-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-size-md);
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .timer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .timer-display {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    color: var(--color-primary);
+  }
+  
+  .timer-inputs {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .timer-inputs input {
+    width: 60px;
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .end-session-button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+  }
+  
+  /* ==========================================
+     Questions List
+     ========================================== */
+  .meetup-qa-questions {
+    flex: 1;
+    background-color: var(--color-background-light);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+  }
+  
+  .questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .meetup-qa-unanswered {
+    padding: var(--spacing-lg);
+    flex: 1;
+  }
+  
+  .meetup-qa-unanswered-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* ==========================================
+     Question Card
+     ========================================== */
+  .question-card {
+    background-color: var(--color-accent);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    cursor: default;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    margin-bottom: var(--spacing-md);
+    width: auto;
+  }
+  
+  .question-card[draggable="true"] {
+    cursor: grab;
+  }
+  
+  .question-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .question-card h3 {
+    margin-top: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+  }
+  
+  .question-text {
+    margin: var(--spacing-sm) 0;
+    font-size: var(--font-size-md);
+    word-wrap: break-word;
+  }
+  
+  .question-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-light);
+  }
+  
+  .question-author {
+    font-size: var(--font-size-xs);
+  }
+  
+  .question-votes {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .vote-button {
+    background-color: transparent;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .vote-button:hover {
+    background-color: var(--color-primary-light);
+  }
+  
+  .vote-button:disabled {
+    color: var(--color-text-lighter);
+    cursor: not-allowed;
+  }
+  
+  .question-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+  
+  .edit-button, .activate-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .edit-button:hover {
+    background-color: var(--color-primary-light);
+  }
+  
+  .activate-button {
+    border-radius: var(--border-radius-md);
+  }
+  
+  .set-active-button {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .delete-button {
+    font-size: var(--font-size-md);
+    color: var(--color-background);
+  }
+  
+  /* ==========================================
+     Question Editing
+     ========================================== */
+  .question-edit {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .edit-input {
+    width: 90%;
+    padding: var(--spacing-xs);
+  }
+  
+  .edit-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+  
+  .save-button, .cancel-button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  /* ==========================================
+     Add Question Form
+     ========================================== */
+  .add-question-form {
+    margin-top: var(--spacing-lg);
+    background-color: var(--color-background);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .add-question-form h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+  
+  .add-question-form textarea {
+    width: 90%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .add-question-form button {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    width: 150px;
+  }
+  
+  /* ==========================================
+     Active Question
+     ========================================== */
+  .meetup-qa-active {
+    flex: 1;
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .active-question {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .active-question-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .active-question-timer {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    color: var(--color-primary);
+    text-align: center;
+    margin: var(--spacing-md) 0;
+  }
+  
+  .active-question-card {
+    background-color: var(--color-active-question);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .active-question-text {
+    font-size: var(--font-size-lg);
+    flex: 1;
+  }
+  
+  .active-question-author {
+    font-style: italic;
+    color: var(--color-text-light);
+    margin-top: var(--spacing-lg);
+  }
+  
+  .no-active-question {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--color-text-lighter);
+    font-size: var(--font-size-md);
+  }
+  
+  .timer-ended {
+    color: var(--color-danger);
+  }
+  
+  /* ==========================================
+     Time Extension Vote
+     ========================================== */
+  .time-extension-vote {
+    background-color: rgba(0, 0, 0, 0.8);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-index-overlay);
+  }
+  
+  .time-vote-modal {
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    width: 400px;
+    text-align: center;
+  }
+  
+  .time-vote-modal h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+  
+  .time-vote-options {
+    display: flex;
+    justify-content: space-around;
+    margin: var(--spacing-lg) 0;
+  }
+  
+  .time-vote-results {
+    margin-top: var(--spacing-md);
+  }
+  
+  .vote-progress-bar {
+    height: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    margin-top: var(--spacing-xs);
+  }
+  
+  .vote-progress-fill {
+    height: 100%;
+    background-color: var(--color-primary);
+    border-radius: 5px;
+  }
+  
+  .admin-resolve-buttons {
+    margin-top: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+  }
+  
+  /* ==========================================
+     Finished Questions
+     ========================================== */
+  .meetup-qa-finished {
+    flex: 1;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+  }
+  
+  .meetup-qa-finished-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .finished-question {
+    background-color: var(--color-finished-question);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.8;
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* ==========================================
+     Participants List
+     ========================================== */
+  .meetup-qa-participants {
+    background-color: var(--color-background-lighter);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+  }
+  
+  .meetup-qa-participants h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+  
+  .meetup-qa-participants ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+  }
+  
+  .meetup-qa-participants li {
+    margin-bottom: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    margin-left: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border-light);
+    background-color: var(--color-background-lighter);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+  }
+  
+  .vote-dots {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+  }
+  
+  .vote-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-primary);
+    border-radius: 50%;
+    display: inline-block;
+  }
+  
+  .vote-dot-used {
+    background-color: var(--color-border-light);
+  }
+  
+  /* ==========================================
+     Comments & Replies
+     ========================================== */
+  .question-replies {
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+  }
+  
+  .replies-list {
+    max-height: 200px; 
+    overflow-y: auto;
+    padding: var(--spacing-xs);
+  }
+  
+  .reply-item {
+    background-color: var(--color-accent); 
+    padding: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  .pinned-reply {
+    font-weight: bold;
+    color: var(--color-warning);
+  }
+  
+  .reply-time {
+    font-size: 0.8em;
+    color: var(--color-text-light);
+  }
+  
+  .reply-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+  
+  .pin-button {
+    padding: 2px var(--spacing-xs);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    background-color: var(--color-secondary);
+  }
+  
+  .reply-input-section {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+  }
+  
+  .comments-toggle-button {
+    background-color: var(--color-secondary);
+    border: none;
+    color: var(--color-background);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0;
+    border-radius: var(--border-radius-md);
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+    margin-left: 75%;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* ==========================================
+     Modal & Overlay Styles
+     ========================================== */
+  .start-session-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-index-modal);
+  }
+  
+  .modal-content {
+    background-color: var(--color-background);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: var(--shadow-xxl);
+  }
+  
+  .modal-content h2 {
+    color: var(--color-primary);
+    margin-top: 0;
+  }
+  
+  .start-session-button {
+    margin-top: var(--spacing-sm);
+    width: 40%;
+  }
+  
+  /* ==========================================
+     No Session & Widget Page
+     ========================================== */
+  .meetup-qa-no-session {
+    text-align: center;
+    padding: 50px var(--spacing-lg);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .meetup-qa-no-session h2 {
+    color: var(--color-primary);
+  }
+  
+  .meetup-qa-no-session p {
+    color: var(--color-text-light);
+    font-size: var(--font-size-md);
+    margin-top: var(--spacing-lg);
+  }
+  
+  .widget-page {
+    margin-top: 50px;
+  }
+  
+  /* ==========================================
+     Utility Buttons & Actions
+     ========================================== */
+  .mod-btn {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    margin-left: 0px;
+    width: auto;
+    height: auto;
+    margin-right: var(--spacing-sm);
+  }
+  
+  .generate-report-button, .download-report-button {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+  }
+  
+  .download-report-button-container {
+    display: flex;
+    justify-content: center;
+    background: transparent;
+  }
+  
+  .download-report-button {
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    margin-left: var(--spacing-sm);
+    width: 50%;
+    height: 50px;
+    margin-right: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .bell-btn {
+    background: none;
+    border: none;
+    border-radius: 4%;
+    cursor: pointer;
+    padding: 0px;
+    margin-left: 0;
+    font-size: var(--font-size-md);
+  }
+  
+  /* ==========================================
+     Register Form Styles
+     ========================================== */
+  .registerForm {
+    background-color: var(--color-background);
+    padding: var(--spacing-xl);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-self: center;
+    margin-top: 150px;
+  }
+  
+  .registerForm h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 28px;
+    color: var(--color-primary);
+  }
+  
+  .registerForm input[type="text"],
+  .registerForm input[type="email"],
+  .registerForm input[type="password"] {
+    width: 100%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-md);
+    box-sizing: border-box;
+  }
+  
+  .error {
+    color: var(--color-danger);
+    font-size: var(--font-size-md);
+    margin-top: -10px;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .registerForm label {
+    font-size: var(--font-size-md);
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .registerForm input[type="checkbox"] {
+    margin-right: var(--spacing-sm);
+  }
+  
+  .registerForm button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    font-size: var(--font-size-md);
+    cursor: pointer;
+    margin-bottom: var(--spacing-sm);
+    transition: background-color var(--transition-normal);
+  }
+  
+  .registerForm button:hover {
+    background-color: var(--color-primary-dark);
+  }
+  
+  .toggle-links {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .toggle-links button {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    margin: 0 var(--spacing-xs);
+    transition: color var(--transition-normal);
+    width: 180px;
+  }
+  
+  .toggle-links button:hover {
+    color: var(--color-primary-dark);
+  }
+  
+  #turnstile-widget {
+    width: 300px;
+    height: 65px;
+    display: block;
+    z-index: 20;
+    border: 2px solid var(--color-danger);
+  }
+  
+  /* ==========================================
+     Responsive Adjustments
+     ========================================== */
+  @media (max-width: 1200px) {
+    .meetup-qa-main {
+      flex-direction: column;
+    }
+    
+    .meetup-qa-participants {
+      width: 100%;
+      margin-top: var(--spacing-lg);
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .registerForm {
+      padding: var(--spacing-lg);
+    }
+  
+    .registerForm button {
+      font-size: var(--font-size-xs);
+    }
+  
+    .registerForm input[type="text"],
+    .registerForm input[type="email"],
+    .registerForm input[type="password"] {
+      font-size: var(--font-size-xs);
+    }
+  }
