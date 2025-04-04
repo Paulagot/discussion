@@ -43,7 +43,7 @@ function SignInForm() {
         try {
             await login(formData);
             setMessage('Logged in successfully!');
-            navigate('/chat');
+            navigate('/discuss');
         } catch (error) {
             setMessage(error.message || 'An error occurred during sign-in');
         }

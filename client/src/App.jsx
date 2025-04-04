@@ -17,10 +17,10 @@ function App() {
           <Route path="/register" element={<SignInMainBody />} />
           
           {/* MeetupQA page */}
-          <Route path="/chat" element={<MeetupQA />} />
+          <Route path="/discuss" element={<MeetupQA />} />
           
           {/* Redirect root to signin by default */}
-          <Route path="/" element={<Navigate to="/signin" replace />} />
+          <Route path="/" element={<Navigate to="/discuss" replace />} />
           
           {/* You can add more routes as needed */}
         </Routes>
