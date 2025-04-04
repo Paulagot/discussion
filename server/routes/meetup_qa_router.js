@@ -162,6 +162,7 @@ meetupQARouter.post('/meetupQA/:sessionId/generate-report', (req, res) => {
 
 
 // Get session details by code (updated to calculate remainingSeconds accurately)
+// In meetup_qa_router.js, replace the existing GET /meetupQA/code/:code route
 meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
   const { code } = req.params;
   const participantName = req.query.participant_name;
@@ -212,14 +213,14 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
         return res.status(500).json({ error: 'Error getting participants' });
       }
 
-      // Fetch pending questions
+      // Fetch pending questions - conditional sorting based on is_questions_sorted
       const questionsQuery = `
         SELECT 
           q.*,
           (SELECT COUNT(*) FROM question_votes WHERE question_id = q.question_id) as votes
         FROM session_questions q
         WHERE q.session_id = ? AND q.status = 'pending'
-        ORDER BY votes DESC
+        ${session.is_questions_sorted ? 'ORDER BY votes DESC' : 'ORDER BY created_at ASC'}
       `;
 
       pool.query(questionsQuery, [session.session_id], (qErr, questions) => {
@@ -333,7 +334,6 @@ meetupQARouter.get('/meetupQA/code/:code', (req, res) => {
                   },
                   grabAttentionTriggered: session.grab_attention_triggered,
                   reportGenerated: session.report_generated,
-                  // New fields added here
                   isQuestionInputEnabled: session.is_question_input_enabled,
                   isDiscussionStarted: session.is_discussion_started,
                   isQuestionsSorted: session.is_questions_sorted,
@@ -649,6 +649,7 @@ meetupQARouter.post('/questions/:question_id/vote', (req, res) => {
 // Set a question as active
 meetupQARouter.put('/questions/:question_id/activate', (req, res) => {
     const { question_id } = req.params;
+    // console.log(`Received PUT /questions/${question_id}/activate from ${req.ip}`);
     
     // Get session_id for this question
     const getSessionQuery = `
@@ -1429,6 +1430,36 @@ meetupQARouter.put('/meetupQA/:sessionId/sort-questions', (req, res) => {
       return res.status(404).json({ error: 'Session not found or inactive' });
     }
     res.json({ success: true });
+  });
+});
+
+// Add email to leads table
+meetupQARouter.post('/leads', (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  // Basic email validation (you can enhance this as needed)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  const insertQuery = `
+    INSERT INTO leads (email, created_at)
+    VALUES (?, NOW())
+    ON DUPLICATE KEY UPDATE created_at = NOW()
+  `;
+
+  pool.query(insertQuery, [email], (err, result) => {
+    if (err) {
+      console.error('Error saving email to leads:', err);
+      return res.status(500).json({ error: 'Database error', details: err });
+    }
+
+    return res.status(201).json({ message: 'Email saved successfully' });
   });
 });
 

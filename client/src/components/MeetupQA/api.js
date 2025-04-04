@@ -5,12 +5,12 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // For debugging - log the base URL
-console.log('API_BASE_URL:', API_BASE_URL);
+// console.log('API_BASE_URL:', API_BASE_URL);
 
 // Helper function to handle API calls and errors consistently
 const apiCall = async (method, url, data = null, params = null) => {
   try {
-    console.log(`${method} request to: ${url}`);
+    // console.log(`${method} request to: ${url}`);
     const config = {
       method,
       url,
@@ -244,5 +244,13 @@ export const sortQuestions = async (sessionId) => {
   return apiCall(
     'PUT',
     `${API_BASE_URL}/meetup_qa/meetupQA/${sessionId}/sort-questions`
+  );
+};
+
+export const submitEmailForNotification = async (email) => {
+  return apiCall(
+    'POST',
+    `${API_BASE_URL}/meetup_qa/leads`,
+    { email }
   );
 };

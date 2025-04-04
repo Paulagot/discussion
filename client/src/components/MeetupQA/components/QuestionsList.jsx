@@ -1,5 +1,5 @@
 // QuestionsList.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { enableDragDrop } from '../HelperFunctions';
 
 const QuestionsList = ({ 
@@ -12,12 +12,31 @@ const QuestionsList = ({
   remainingVotes,
   isAdmin,
   isModerator,
+  isQuestionsSorted,
 }) => {
   const questionRefs = useRef({});
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [editText, setEditText] = useState('');
-  const [votedQuestions, setVotedQuestions] = useState(new Set()); // NEW: Track voted questions
-  const [voteError, setVoteError] = useState(''); // NEW: Error message
+  const [votedQuestions, setVotedQuestions] = useState(new Set());
+  const [voteError, setVoteError] = useState('');
+  const dropTimeoutRef = useRef(null); // Ref to debounce drop
+
+  // Debounced drop handler
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    const activeQuestionArea = document.querySelector('#active-question-area');
+    if (activeQuestionArea) {
+      activeQuestionArea.classList.remove('drop-target-active');
+    }
+    const questionId = e.dataTransfer.getData('questionId');
+    if (questionId && onSetActive && !dropTimeoutRef.current) {
+      dropTimeoutRef.current = setTimeout(() => {
+        // console.log(`Dropping question ${questionId}`);
+        onSetActive(questionId);
+        dropTimeoutRef.current = null;
+      }, 100); // 100ms debounce
+    }
+  }, [onSetActive]);
 
   useEffect(() => {
     if (onSetActive) {
@@ -49,26 +68,19 @@ const QuestionsList = ({
           activeQuestionArea.classList.remove('drop-target-active');
         });
         
-        activeQuestionArea.addEventListener('drop', (e) => {
-          e.preventDefault();
-          activeQuestionArea.classList.remove('drop-target-active');
-          const questionId = e.dataTransfer.getData('questionId');
-          if (questionId && onSetActive) {
-            onSetActive(questionId);
-          }
-        });
+        activeQuestionArea.addEventListener('drop', handleDrop);
       }
+      
+      return () => {
+        const activeQuestionArea = document.querySelector('#active-question-area');
+        if (activeQuestionArea) {
+          activeQuestionArea.removeEventListener('dragover', () => {});
+          activeQuestionArea.removeEventListener('dragleave', () => {});
+          activeQuestionArea.removeEventListener('drop', handleDrop);
+        }
+      };
     }
-    
-    return () => {
-      const activeQuestionArea = document.querySelector('#active-question-area');
-      if (activeQuestionArea) {
-        activeQuestionArea.removeEventListener('dragover', () => {});
-        activeQuestionArea.removeEventListener('dragleave', () => {});
-        activeQuestionArea.removeEventListener('drop', () => {});
-      }
-    };
-  }, [questions, onSetActive]);
+  }, [questions, onSetActive, handleDrop]);
 
   if (!questions || questions.length === 0) {
     return <p className="no-questions">No questions yet. Be the first to ask!</p>;
@@ -95,7 +107,7 @@ const QuestionsList = ({
   const handleVote = async (questionId) => {
     if (votedQuestions.has(questionId)) {
       setVoteError('Already voted on this question');
-      setTimeout(() => setVoteError(''), 3000); // Clear after 3s
+      setTimeout(() => setVoteError(''), 3000);
       return;
     }
 
@@ -111,8 +123,8 @@ const QuestionsList = ({
   };
 
   return (
-    <div className="questions-list">
-      {voteError && <div className="vote-error">{voteError}</div>} {/* NEW: Warning */}
+    <div className={`questions-list ${!isQuestionsSorted ? 'questions-list--unsorted' : ''}`}>
+      {voteError && <div className="vote-error">{voteError}</div>}
       {questions.map(question => (
         <div 
           key={question.id} 
@@ -133,14 +145,16 @@ const QuestionsList = ({
                 rows="2"
               />
               <div className="edit-actions">
-                <button  type="button"
+                <button
+                  type="button"
                   className="save-button"
                   onClick={() => saveEdit(question.id)}
                   disabled={!editText.trim()}
                 >
                   Save
                 </button>
-                <button  type="button"
+                <button
+                  type="button"
                   className="cancel-button"
                   onClick={cancelEditing}
                 >
@@ -153,10 +167,11 @@ const QuestionsList = ({
           )}
 
           <div className="question-votes">
-            <button   type="button"
+            <button
+              type="button"
               className="vote-button"
-              onClick={() => handleVote(question.id)} // NEW: Use handleVote
-              disabled={remainingVotes <= 0 || votedQuestions.has(question.id)} // NEW: Disable if voted
+              onClick={() => handleVote(question.id)}
+              disabled={remainingVotes <= 0 || votedQuestions.has(question.id)}
               title={
                 remainingVotes <= 0 ? "No votes remaining" : 
                 votedQuestions.has(question.id) ? "Already voted" : "Vote for this question"
@@ -168,7 +183,7 @@ const QuestionsList = ({
             
             {onSetActive && (
               <button 
-               type="button"
+                type="button"
                 className="activate-button"
                 onClick={() => onSetActive(question.id)}
                 title="Set as active question"
@@ -179,7 +194,7 @@ const QuestionsList = ({
             
             {(onEdit && question.author === currentUser && editingQuestionId !== question.id) && (
               <button 
-               type="button"
+                type="button"
                 className="activate-button"
                 onClick={() => startEditing(question)}
                 title="Edit your question"
@@ -190,7 +205,7 @@ const QuestionsList = ({
             
             {((isAdmin || isModerator || question.author === currentUser) && onDelete) && (
               <button 
-               type="button"
+                type="button"
                 className="activate-button"
                 onClick={() => onDelete(question.id)}
                 title={isAdmin || isModerator ? "Delete this question (Admin/Mod)" : "Delete your question"}

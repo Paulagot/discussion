@@ -13,16 +13,16 @@ export const AuthProvider = ({ children }) => {
         try {
             // Use a relative URL that will be proxied
             const url = '/session/check-session';
-            console.log('Fetching session from:', url);
+            // console.log('Fetching session from:', url);
             
             const response = await fetch(url, {
                 credentials: 'include',
             });
             
-            console.log('Response status:', response.status);
+            // console.log('Response status:', response.status);
             
             if (!response.ok) {
-                console.log('Session check failed with status:', response.status);
+                // console.log('Session check failed with status:', response.status);
                 setIsAuthenticated(false);
                 setUser(null);
                 return null;
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
             
             // Check if the response is JSON
             const contentType = response.headers.get('Content-Type');
-            console.log('Content-Type:', contentType);
+            // console.log('Content-Type:', contentType);
             
             if (!contentType || !contentType.includes('application/json')) {
                 console.error('Received content type:', contentType);
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
             }
             
             const data = await response.json();
-            console.log('Session data:', data);
+            // console.log('Session data:', data);
             setIsAuthenticated(data.isAuthenticated);
             setUser(data.user || null);
             return data;
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         try {
             // Change to use the register/login endpoint
             const url = '/register/login';
-            console.log('Login URL:', url);
+            // console.log('Login URL:', url);
             
             const response = await fetch(url, {
                 method: 'POST',

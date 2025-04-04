@@ -36,7 +36,6 @@ export function usePolling({
   setReplies,
   setReportGenerated,
   playAudio,
-  // Add new parameters
   isQuestionInputEnabled,
   setIsQuestionInputEnabled,
   isDiscussionStarted,
@@ -96,9 +95,8 @@ export function usePolling({
         if ((serverTimer === 0 || voteActive) && !showTimeVote) {
           setShowTimeVote(true);
         }
-        const isVoteActive = data.timerInfo.isTimeVoteActive;
-        if (isVoteActive !== showTimeVote) {
-          setShowTimeVote(isVoteActive);
+        if (voteActive !== showTimeVote) {
+          setShowTimeVote(voteActive);
         }
         if (serverTimer > 0) {
           prevTimerRef.current = serverTimer;
@@ -142,7 +140,9 @@ export function usePolling({
       } : null;
       if (forceUpdate || 
           (newActiveQuestion?.id !== activeQuestion?.id) || 
-          (newActiveQuestion === null && activeQuestion !== null)) {
+          (newActiveQuestion === null && activeQuestion !== null) ||
+          JSON.stringify(newActiveQuestion) !== JSON.stringify(activeQuestion)) {
+        // console.log('Updating active question from polling:', newActiveQuestion);
         setActiveQuestion(newActiveQuestion);
       }
 
@@ -181,7 +181,6 @@ export function usePolling({
         setReportGenerated(data.reportGenerated);
       }
 
-      // Sync new state variables
       if (forceUpdate || data.isQuestionInputEnabled !== isQuestionInputEnabled) {
         setIsQuestionInputEnabled(data.isQuestionInputEnabled !== undefined ? data.isQuestionInputEnabled : true);
       }
@@ -242,7 +241,6 @@ export function usePolling({
     setReplies,
     setReportGenerated,
     playAudio,
-    // Add new dependencies
     isQuestionInputEnabled,
     setIsQuestionInputEnabled,
     isDiscussionStarted,

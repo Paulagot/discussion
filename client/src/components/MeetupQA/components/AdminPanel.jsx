@@ -1,8 +1,8 @@
 // AdminPanel.jsx
 import React, { useState } from 'react';
 import { generateReport } from './GenerateReport.jsx';
-import { triggerGenerateReport } from './../api.js'; // Adjust path as needed
-import { toggleQuestionInput, startDiscussion, sortQuestions } from './../api.js'; // Adjust path as needed
+import { triggerGenerateReport } from './../api.js';
+import { toggleQuestionInput } from './../api.js';
 
 const AdminPanel = ({
   sessionCode,
@@ -19,13 +19,12 @@ const AdminPanel = ({
   onGrabAttention,
   sessionId,
   isQuestionInputEnabled,
-    setIsQuestionInputEnabled,
-    isDiscussionStarted,
-    setIsDiscussionStarted,
-    isQuestionsSorted,
-    setIsQuestionsSorted,
-
-
+  setIsQuestionInputEnabled,
+  isDiscussionStarted,
+  setIsDiscussionStarted,
+  isQuestionsSorted,
+  setIsQuestionsSorted,
+  handleSortQuestions,
 }) => {
   const [minutes, setMinutes] = useState(5);
   const [isEnding, setIsEnding] = useState(false);
@@ -48,7 +47,7 @@ const AdminPanel = ({
       setIsEnding(true);
       try {
         await onEndSession();
-        setIsEnding(false); // Reset after success
+        setIsEnding(false);
       } catch (err) {
         console.error("Error ending session:", err);
         setIsEnding(false);
@@ -90,30 +89,11 @@ const AdminPanel = ({
     }
   };
 
-  const handleStartDiscussion = async () => {
-    try {
-      await startDiscussion(sessionId);
-      setIsDiscussionStarted(true);
-    } catch (err) {
-      console.error("Error starting discussion:", err);
-      alert("Failed to start discussion.");
-    }
-  };
-
-  const handleSortQuestions = async () => {
-    try {
-      await sortQuestions(sessionId);
-      setIsQuestionsSorted(true);
-    } catch (err) {
-      console.error("Error sorting questions:", err);
-      alert("Failed to sort questions.");
-    }
-  };
-
   return (
     <div className="admin-panel">
+      <h2 className="section-h2">Admin Panel</h2>
       <div className="session-info">
-        <div>
+        <div className="session-info">
           <strong>Session Code:</strong>
           <span className="session-code">{sessionCode}</span>
           <button
@@ -135,30 +115,26 @@ const AdminPanel = ({
         </button>
 
         <div className="admin-actions">
-        {!isQuestionsSorted && (
-    <button
-      type="button"
-      onClick={handleToggleQuestionInput}
-      disabled={isEnding || isGenerating}
-    >
-      {isQuestionInputEnabled ? "Disable Question Input" : "Enable Question Input"}
-    </button>
-  )}
-  {/* Comment out Start Discussion for now */}
-  {/* <button
-    type="button"
-    onClick={handleStartDiscussion}
-    disabled={isDiscussionStarted || isEnding || isGenerating}
-  >
-    Start Discussion
-  </button> */}
-  <button
-    type="button"
-    onClick={handleSortQuestions}
-    disabled={isQuestionsSorted || isEnding || isGenerating}
-  >
-    Sort Questions
-  </button>
+          {!isQuestionsSorted && (
+            <button
+              type="button"
+              className="disable-q-btn"
+              onClick={handleToggleQuestionInput}
+              disabled={isEnding || isGenerating}
+            >
+              {isQuestionInputEnabled ? "Disable Questions" : "Enable Questions"}
+            </button>
+          )}
+          {!isQuestionsSorted && ( // Added conditional rendering here
+            <button
+              type="button"
+              className="sort-q-btn"
+              onClick={handleSortQuestions}
+              disabled={isEnding || isGenerating}
+            >
+              Sort Questions
+            </button>
+          )}
 
           <button
             type="button"
@@ -169,14 +145,6 @@ const AdminPanel = ({
             {isGenerating ? 'Generating...' : 'Generate Report'}
           </button>
         </div>
-        <button
-          type="button"
-          className="end-session-button"
-          onClick={handleEndSession}
-          disabled={isEnding || isGenerating}
-        >
-          {isEnding ? 'Ending...' : 'End Session'}
-        </button>
       </div>
 
       <div className="timer-controls">
@@ -197,9 +165,17 @@ const AdminPanel = ({
             type="button"
             className="set-timer-button"
             onClick={() => onSetTimer(minutes)}
-            disabled={isEnding || isGenerating || !activeQuestion} // Add !activeQuestion
+            disabled={isEnding || isGenerating || !activeQuestion}
           >
-            Set Timer
+            Start
+          </button>
+          <button
+            type="button"
+            className="end-session-button"
+            onClick={handleEndSession}
+            disabled={isEnding || isGenerating}
+          >
+            {isEnding ? 'Ending...' : 'End Session'}
           </button>
         </div>
       </div>

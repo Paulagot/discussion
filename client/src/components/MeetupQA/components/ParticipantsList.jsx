@@ -6,6 +6,9 @@ const ParticipantsList = ({ participants, isAdmin, onSetModerator, onRemoveParti
   // console.log("ParticipantsList received participants:", JSON.stringify(participants, null, 2));
   return (
     <div className="meetup-qa-participants">
+      <h2 className="section-h2">Participants</h2>
+      <div className="participants-sub">
+
       <ul>
         {participants.map(p => {
           // console.log("Rendering participant:", p.name, "ID:", p.participant_id);
@@ -42,6 +45,7 @@ const ParticipantsList = ({ participants, isAdmin, onSetModerator, onRemoveParti
           );
         })}
       </ul>
+      </div>
     </div>
   );
 };

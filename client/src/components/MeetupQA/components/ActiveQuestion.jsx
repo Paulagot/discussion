@@ -41,7 +41,7 @@ const ActiveQuestion = ({
   return (
     <div className="active-question">
       <div className="active-question-header">
-        <h2>Current Discussion</h2>
+        <h2 className="section-h2">Current Discussion</h2>
       </div>
       
       {question ? (

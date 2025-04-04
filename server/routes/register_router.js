@@ -232,7 +232,7 @@ registerRouter.post('/password-reset', async (req, res) => {
 
             // Log reset link for testing (replace with actual email sending in production)
             const resetUrl = `${appUrl}/register?view=setPassword&token=${resetToken}`;
-            console.log(resetUrl);
+            // console.log(resetUrl);
 
             // Placeholder email sending (log for now)
             const mailOptions = {

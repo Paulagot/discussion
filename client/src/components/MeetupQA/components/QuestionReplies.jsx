@@ -40,7 +40,7 @@ const QuestionReplies = ({
 
   return (
     <div className="question-replies">
-      <h3>Comments</h3>
+      <h3 className='section-subheader'>Comments</h3>
       <div className="replies-list">
         {sortedReplies.length === 0 ? (
           <p className="no-replies">No comments yet—add one!</p>

@@ -13,7 +13,7 @@ function App() {
           {/* Sign In page */}
           <Route path="/signin" element={<SignInMainBody />} />
           
-          {/* Add this new route for password reset */}
+          {/*password reset */}
           <Route path="/register" element={<SignInMainBody />} />
           
           {/* MeetupQA page */}

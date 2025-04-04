@@ -1,6 +1,5 @@
-
 // MeetupQA/index.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/auth_context';
 import { useSessionState } from './useSessionState';
 import { usePolling } from './usePolling';
@@ -8,7 +7,7 @@ import { useTimer } from './useTimer';
 import { useCallback } from 'react';
 import { generateReport } from './components/GenerateReport';
 import { useAudio } from './UseAudio';
-import { triggerGrabAttention } from './api';// Import playSound
+import { triggerGrabAttention } from './api';
 import {
   fetchSessionData,
   startSession,
@@ -28,7 +27,7 @@ import {
   deleteReply,
   setModerator,
   removeParticipant,
-
+  sortQuestions,
 } from './api';
 
 import JoinForm from './components/JoinForm';
@@ -99,8 +98,6 @@ const MeetupQA = () => {
 
   const hasFetchedInitialData = useRef(false);
   const isModerator = participants.find(p => p.name === guestName)?.isModerator || false;
-
-  // Initialize audio
   const { playAudio, hasPlayedSound, resetTimerSound } = useAudio({ isAdmin, guestName });
 
   const fetchSessionDataFromServer = useCallback(
@@ -108,7 +105,6 @@ const MeetupQA = () => {
       try {
         setIsLoading(true);
         const data = await fetchSessionData(code, guestName);
-        // console.log("Session data fetched for", guestName, ":", JSON.stringify(data, null, 2));
 
         if (!sessionActive) setSessionActive(true);
         if (sessionId !== data.session.session_id) setSessionId(data.session.session_id);
@@ -197,22 +193,19 @@ const MeetupQA = () => {
           if (hasVoted !== data.timeVoteInfo.hasVoted) setHasVoted(data.timeVoteInfo.hasVoted);
         }
 
-        // Sync reportGenerated for non-admins
-        // Sync reportGenerated for all (remove !isAdmin condition)
-  if (data.reportGenerated !== undefined && data.reportGenerated !== reportGenerated) {
-    setReportGenerated(data.reportGenerated);
-  }
+        if (data.reportGenerated !== undefined && data.reportGenerated !== reportGenerated) {
+          setReportGenerated(data.reportGenerated);
+        }
 
-   // New state updates
-   if (data.isQuestionInputEnabled !== undefined) {
-    setIsQuestionInputEnabled(data.isQuestionInputEnabled);
-  }
-  if (data.isDiscussionStarted !== undefined) {
-    setIsDiscussionStarted(data.isDiscussionStarted);
-  }
-  if (data.isQuestionsSorted !== undefined) {
-    setIsQuestionsSorted(data.isQuestionsSorted);
-  }
+        if (data.isQuestionInputEnabled !== undefined) {
+          setIsQuestionInputEnabled(data.isQuestionInputEnabled);
+        }
+        if (data.isDiscussionStarted !== undefined) {
+          setIsDiscussionStarted(data.isDiscussionStarted);
+        }
+        if (data.isQuestionsSorted !== undefined) {
+          setIsQuestionsSorted(data.isQuestionsSorted);
+        }
 
         setError('');
       } catch (err) {
@@ -264,11 +257,9 @@ const MeetupQA = () => {
       setSessionCode,
       setIsJoined,
       setShowStartModal,
-      setReportGenerated,
       setIsQuestionInputEnabled,
       setIsDiscussionStarted,
       setIsQuestionsSorted,
-    
     ]
   );
 
@@ -330,12 +321,10 @@ const MeetupQA = () => {
     setTimer,
     setShowTimeVote,
     hasVoted,
-    playAudio, // Pass to useTimer
-    hasPlayedSound, // Pass to useTimer
+    playAudio,
+    hasPlayedSound,
     resetTimerSound
   });
-
-
 
   const handleStartSession = async () => {
     try {
@@ -343,7 +332,6 @@ const MeetupQA = () => {
       const adminName = user?.first_name || user?.email || "Admin";
       const response = await startSession(code, adminName, null);
       
-
       setSessionCode(code);
       setSessionId(response.session_id);
       setSessionActive(true);
@@ -351,6 +339,7 @@ const MeetupQA = () => {
       setGuestName(adminName);
       setIsJoined(true);
       setReportGenerated(false);
+      setIsQuestionsSorted(false);
       playAudio('start');
       saveSessionToStorage(code, adminName, response.session_id, true);
       await fetchSessionDataFromServer(code);
@@ -372,12 +361,13 @@ const MeetupQA = () => {
       setParticipants([]);
       setIsJoined(false);
       setReportGenerated(true);
+      setIsQuestionsSorted(false);
       clearSessionFromStorage();
       if (isAdmin) setShowStartModal(true);
     } catch (err) {
       console.error("Error ending session:", err);
       setError('Failed to end session. Please try again.');
-      throw err; // Re-throw to propagate to AdminPanel
+      throw err;
     }
   };
 
@@ -389,6 +379,7 @@ const MeetupQA = () => {
       setIsJoined(true);
       setSessionActive(true);
       setReportGenerated(false);
+      setIsQuestionsSorted(false);
       saveSessionToStorage(sessionCode, guestName, response.session_id, false);
       playAudio('join');
       await polling.fetchSessionDataQuietly(true);
@@ -401,15 +392,6 @@ const MeetupQA = () => {
       throw err;
     }
   };
-
-  {!isJoined && !isAdmin && (
-    <div>
-      <input value={sessionCode} onChange={(e) => setSessionCode(e.target.value)} placeholder="Session Code" />
-      <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your Name" />
-
-      <button  type="button" onClick={() => handleJoin(sessionCode, guestName)}>Join Session</button>
-    </div>
-  )}
 
   const handleAddQuestion = async (questionText) => {
     if (!questionText.trim() || !sessionId) return;
@@ -445,6 +427,7 @@ const MeetupQA = () => {
 
   const handleSetActive = async (questionId) => {
     try {
+      // console.log(`Activating question ${questionId}`);
       await activateQuestion(questionId);
       const questionToActivate = questions.find((q) => q.id === questionId);
       if (questionToActivate) {
@@ -455,12 +438,15 @@ const MeetupQA = () => {
       setShowTimeVote(false);
       setTimeVotes({ yes: 0, no: 0 });
       setHasVoted(false);
-      await polling.fetchSessionDataQuietly(true);
+      await polling.fetchSessionDataQuietly(true); // Force refresh to sync all clients
+      setError('');
     } catch (err) {
       console.error("Error setting active question:", err);
-      setError('Failed to set active question.');
+      setError('Failed to set active question. Please try again.');
+      // Attempt to recover by forcing a refresh
+      await polling.fetchSessionDataQuietly(true);
     }
-  };
+  };;
 
   const handleSetTimer = async (minutes) => {
     try {
@@ -475,33 +461,30 @@ const MeetupQA = () => {
     }
   };
 
-    // New Grab Attention handler
-    const handleGrabAttention = async () => {
-      playAudio('grab-attention'); // Play locally for admin
-      try {
-        await triggerGrabAttention(sessionId, guestName); // Signal server
-      } catch (err) {
-        console.error('Failed to trigger grab attention:', err);
-      }
-    };
+  const handleGrabAttention = async () => {
+    playAudio('grab-attention');
+    try {
+      await triggerGrabAttention(sessionId, guestName);
+    } catch (err) {
+      console.error('Failed to trigger grab attention:', err);
+    }
+  };
 
-    const handleTimeVote = async (vote) => {
-      if (vote === 'close') {
-        setShowTimeVote(false);
-        return;
-      }
-      if (hasVoted) return;
-      try {
-        const data = await submitTimeVote(sessionId, guestName, vote);
-        setTimeVotes(data.votes);
-        setHasVoted(true);
-      } catch (err) {
-        console.error("Error submitting vote:", err);
-        setError("Failed to submit vote.");
-      }
-    };
-  
-  
+  const handleTimeVote = async (vote) => {
+    if (vote === 'close') {
+      setShowTimeVote(false);
+      return;
+    }
+    if (hasVoted) return;
+    try {
+      const data = await submitTimeVote(sessionId, guestName, vote);
+      setTimeVotes(data.votes);
+      setHasVoted(true);
+    } catch (err) {
+      console.error("Error submitting vote:", err);
+      setError("Failed to submit vote.");
+    }
+  };
 
   const handleResolveTimeVote = async (addMoreTime) => {
     try {
@@ -651,6 +634,17 @@ const MeetupQA = () => {
     }
   };
 
+  const handleSortQuestions = async () => {
+    try {
+      await sortQuestions(sessionId);
+      setIsQuestionsSorted(true);
+      await polling.fetchSessionDataQuietly(true);
+    } catch (err) {
+      console.error("Error sorting questions:", err);
+      setError('Failed to sort questions.');
+    }
+  };
+
   if (isLoading) return <LoadingState />;
   if (isAdmin && showStartModal) return <StartSessionModal onStart={handleStartSession} />;
   if (!isJoined) return <JoinForm onJoin={handleJoin} />;
@@ -662,116 +656,115 @@ const MeetupQA = () => {
     />
   );
 
-  const displayedQuestions = isQuestionsSorted
-  ? [...questions].sort((a, b) => b.votes - a.votes)
-  : questions;
-
-return (
-  <main className="container__right" id="main">
-    <div className="meetup-qa-container">
-      {error && <div className="error-message">{error}</div>}
-
-      {isAdmin && (
-        <AdminPanel
-          sessionCode={sessionCode}
-          onSetTimer={handleSetTimer}
-          timer={timer}
-          participants={participants}
-          onEndSession={handleEndSession}
-          questions={questions}
-          activeQuestion={activeQuestion}
-          finishedQuestions={finishedQuestions}
-          replies={replies}
-          setReportGenerated={setReportGenerated}
-          guestName={guestName}
-          onGrabAttention={handleGrabAttention}
-          sessionId={sessionId}
-          isQuestionInputEnabled={isQuestionInputEnabled}
-          setIsQuestionInputEnabled={setIsQuestionInputEnabled}
-          isDiscussionStarted={isDiscussionStarted}
-          setIsDiscussionStarted={setIsDiscussionStarted}
-          isQuestionsSorted={isQuestionsSorted}
-          setIsQuestionsSorted={setIsQuestionsSorted}
-        />
-      )}
-      <div className="download-report-button-container">
-        {reportGenerated && (
-          <button
-            type="button"
-            className="download-report-button"
-            onClick={() => generateReport({ sessionCode, participants, questions, activeQuestion, finishedQuestions, replies, hostName: guestName, isAdmin })}
-          >
-            Download Report
-          </button>
-        )}
-      </div>
-
+  return (
+    <div className="outter-container">
       <ParticipantsList
         participants={participants}
         isAdmin={isAdmin}
         onSetModerator={handleSetModerator}
         onRemoveParticipant={handleRemoveParticipant}
       />
-
-      {!reportGenerated && isQuestionInputEnabled && !isQuestionsSorted && (
-        <div className="meetup-qa-questions">
-          <AddQuestionForm onAddQuestion={handleAddQuestion} />
-        </div>
-      )}
-
-      <div className="meetup-qa-main">
-        <div className="meetup-qa-unanswered">
-          <h2 className="meetup-qa-unanswered-header">Questions ({displayedQuestions.length})</h2>
-          <QuestionsList
-            questions={displayedQuestions}
-            onVote={handleVoteQuestion}
-            onEdit={handleEditQuestion}
-            onDelete={handleDeleteQuestion}
-            onSetActive={isAdmin ? handleSetActive : null}
-            currentUser={guestName}
-            remainingVotes={remainingVotes}
-            isAdmin={isAdmin}
-            isModerator={isModerator}
+      <main className="container__right" id="main">
+        {isAdmin && (
+          <AdminPanel
+            sessionCode={sessionCode}
+            onSetTimer={handleSetTimer}
+            timer={timer}
+            participants={participants}
+            onEndSession={handleEndSession}
+            questions={questions}
+            activeQuestion={activeQuestion}
+            finishedQuestions={finishedQuestions}
+            replies={replies}
+            setReportGenerated={setReportGenerated}
+            guestName={guestName}
+            onGrabAttention={handleGrabAttention}
+            sessionId={sessionId}
+            isQuestionInputEnabled={isQuestionInputEnabled}
+            setIsQuestionInputEnabled={setIsQuestionInputEnabled}
+            isDiscussionStarted={isDiscussionStarted}
+            setIsDiscussionStarted={setIsDiscussionStarted}
+            isQuestionsSorted={isQuestionsSorted}
+            setIsQuestionsSorted={setIsQuestionsSorted}
+            handleSortQuestions={handleSortQuestions}
           />
-          {isQuestionsSorted && (
-            <div className="meetup-qa-finished">
-              <h2 className="meetup-qa-finished-header">
-                Answered Questions ({finishedQuestions.length})
-              </h2>
-              <FinishedQuestions questions={finishedQuestions} replies={replies} />
-            </div>
-          )}
-        </div>
+        )}
+        <div className="meetup-qa-container">
+          {error && <div className="error-message">{error}</div>}
 
-        {isQuestionsSorted && (
-          <div className="meetup-qa-active" id="active-question-area">
-            <ActiveQuestion
-              question={activeQuestion}
-              timer={timer}
-              replies={replies[activeQuestion?.id] || []}
-              currentUser={guestName}
-              isAdmin={isAdmin}
-              isModerator={isModerator}
-              onAddReply={handleAddReply}
-              onPinReply={(replyId) => handlePinReply(activeQuestion?.id, replyId)}
-              onDeleteReply={(replyId) => handleDeleteReply(activeQuestion?.id, replyId)}
-              showTimeVote={showTimeVote}
-            />
-            {showTimeVote && (
-              <TimeExtensionVote
-                onVote={handleTimeVote}
-                onResolve={isAdmin ? handleResolveTimeVote : null}
-                votes={timeVotes}
-                totalParticipants={participants.length}
-                hasVoted={hasVoted}
-              />
+          <div className="download-report-button-container">
+            {!!reportGenerated && (
+              <button
+                type="button"
+                className="download-report-button"
+                onClick={() => generateReport({ sessionCode, participants, questions, activeQuestion, finishedQuestions, replies, hostName: guestName, isAdmin })}
+              >
+                Download Report
+              </button>
             )}
           </div>
-        )}
-      </div>
+
+          {!reportGenerated && !!isQuestionInputEnabled && !isQuestionsSorted && (
+            <div className="meetup-qa-questions">
+              <AddQuestionForm onAddQuestion={handleAddQuestion} />
+            </div>
+          )}
+
+          <div className="meetup-qa-main">
+            <div className="meetup-qa-unanswered">
+              <h2 className="meetup-qa-unanswered-header">Topics & Questions ({questions.length})</h2>
+              <QuestionsList
+                questions={questions}
+                onVote={handleVoteQuestion}
+                onEdit={handleEditQuestion}
+                onDelete={handleDeleteQuestion}
+                onSetActive={isAdmin ? handleSetActive : null}
+                currentUser={guestName}
+                remainingVotes={remainingVotes}
+                isAdmin={isAdmin}
+                isModerator={isModerator}
+                isQuestionsSorted={isQuestionsSorted}
+              />
+              {!!isQuestionsSorted && (
+                <div className="meetup-qa-finished">
+                  <h2 className="meetup-qa-finished-header">
+                    Discussed ({finishedQuestions.length})
+                  </h2>
+                  <FinishedQuestions questions={finishedQuestions} replies={replies} />
+                </div>
+              )}
+            </div>
+
+            {!!isQuestionsSorted && (
+              <div className="meetup-qa-active" id="active-question-area">
+                <ActiveQuestion
+                  question={activeQuestion}
+                  timer={timer}
+                  replies={replies[activeQuestion?.id] || []}
+                  currentUser={guestName}
+                  isAdmin={isAdmin}
+                  isModerator={isModerator}
+                  onAddReply={handleAddReply}
+                  onPinReply={(replyId) => handlePinReply(activeQuestion?.id, replyId)}
+                  onDeleteReply={(replyId) => handleDeleteReply(activeQuestion?.id, replyId)}
+                  showTimeVote={showTimeVote}
+                />
+                {showTimeVote && (
+                  <TimeExtensionVote
+                    onVote={handleTimeVote}
+                    onResolve={isAdmin ? handleResolveTimeVote : null}
+                    votes={timeVotes}
+                    totalParticipants={participants.length}
+                    hasVoted={hasVoted}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
-  </main>
-);
+  );
 };
 
 export default MeetupQA;

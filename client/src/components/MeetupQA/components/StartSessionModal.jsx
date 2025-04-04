@@ -19,7 +19,7 @@ const StartSessionModal = ({ onStart }) => {
       <div className="modal-content">
         <h2>Start Q&A Session</h2>
         <p>
-          As an administrator, you can start a new Q&A session. 
+          Time to start a new Q&A session. 
           Once started, you'll receive a unique session code that 
           participants can use to join.
         </p>

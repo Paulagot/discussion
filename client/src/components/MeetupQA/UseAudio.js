@@ -19,7 +19,7 @@ export function useAudio({ isAdmin, guestName }) {
       silentAudio.volume = 0;
       silentAudio.play()
         .then(() => {
-          console.log(`Audio unlocked for ${isAdmin ? 'admin' : 'user'} (${guestName})`);
+          // console.log(`Audio unlocked for ${isAdmin ? 'admin' : 'user'} (${guestName})`);
           isUnlocked.current = true;
         })
         .catch((err) => console.error('Failed to unlock audio on mount:', err));
