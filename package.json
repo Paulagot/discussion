@@ -1,25 +1,26 @@
 {
   "name": "qa-app",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server/server.js",
+  
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm run build",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "npx cross-env NODE_ENV=development node server/server.js",
+  "start": "npx cross-env NODE_ENV=production node server/server.js",
+    "dev": "npx cross-env NODE_ENV=development concurrently \"npm run server\" \"npm run client\""
+
+
+
   },
-  "keywords": [
-    "react",
-    "express",
-    "fullstack"
-  ],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3"
+  },
+  "dependencies": {
+    "all": "^0.0.0"
   }
 }

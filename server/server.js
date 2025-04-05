@@ -4,6 +4,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import dotenv from "dotenv";
+import express from 'express';
+import cors from "cors";
+import session from 'express-session';
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -31,10 +34,8 @@ if (fs.existsSync(path.join(__dirname, envFile))) {
 // Import remaining dependencies
 import helmet from 'helmet';
 import compression from "compression";
-import express from 'express';
-import cors from "cors";
 import https from 'node:https';
-import session from 'express-session';
+
 
 // Import your routes
 import meetupQARouter from "./routes/meetup_qa_router.js";
@@ -77,14 +78,13 @@ const app = express();
 
 // CORS Configuration
 const productionOrigins = [
-  'https://ablockofcrypto.com',
-  'https://app.ablockofcrypto.com',
+  'https://mindslive.com',
+  'https://mindslive.com',
   'xpmodule.c188ccsye2s8.us-east-1.rds.amazonaws.com',
   'http://localhost:3000',
-  'http://abc-loadbalancer-1196555837.us-east-1.elb.amazonaws.com/',
-  'http://ec2-54-91-235-19.compute-1.amazonaws.com',
-  'http://ABC-loadbalancer-819050676.us-east-1.elb.amazonaws.com/' ,
-  'https://localhost:3000'
+  'https://localhost:3000',
+  'http://localhost:5000',
+  'https://localhost:5000'
 ];
 
 const developmentOrigins = [
@@ -110,11 +110,33 @@ app.use(cors({
   credentials: true
 }));
 
+// Initialize session store using Knex
+
+import { ConnectSessionKnexStore } from "connect-session-knex";
+import knexConstructor from "knex";
+
+// Configure Knex for session store
+const knex = knexConstructor({
+  client: 'mysql2',
+  connection: {
+    host: process.env.DATABASE_HOST,
+    user: process.env.DATABASE_USER,
+    password: process.env.DATABASE_PASSWORD,
+    database: process.env.DATABASE_NAME,
+  },
+});
+
+const store = new ConnectSessionKnexStore({
+  knex,
+ 
+});
+
 // Initialize session - without database for now
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-fallback',
   resave: false,
   saveUninitialized: false,
+  store: store,
   cookie: {
     secure: false,
     httpOnly: true,
@@ -123,19 +145,27 @@ app.use(session({
   }
 }));
 
+
 // Middleware to enforce HTTPS in production
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true') {
   console.log('Production mode: Enabling HTTPS enforcement');
   app.use((req, res, next) => {
-    if (process.env.LOCAL_PRODUCTION === 'true' || 
-        req.headers['user-agent']?.includes('ELB-HealthChecker')) {
+    if (
+      process.env.LOCAL_PRODUCTION === 'true' ||
+      req.headers['user-agent']?.includes('ELB-HealthChecker')
+    ) {
       return next();
     }
-    
-    // Allow HTTP for certain paths
-    const allowedPaths = ['/health', '/session/check-session', '/session/login', '/session/logout'];
 
-    if (allowedPaths.some(path => req.path.startsWith(path))) {
+    // Allow HTTP for certain paths
+    const allowedPaths = [
+      '/health',
+      '/session/check-session',
+      '/session/login',
+      '/session/logout',
+    ];
+
+    if (allowedPaths.some((path) => req.path.startsWith(path))) {
       return next();
     }
 
@@ -145,6 +175,8 @@ if (process.env.NODE_ENV === 'production') {
     }
     next();
   });
+} else {
+  console.log('HTTPS enforcement disabled');
 }
 
 // UPDATED: Look for dist in client directory
