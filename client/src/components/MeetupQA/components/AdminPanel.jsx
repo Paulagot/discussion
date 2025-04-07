@@ -78,16 +78,23 @@ const AdminPanel = ({
     }
   };
 
+
+
+  const [showDisableQuestions, setShowDisableQuestions] = useState(true);
+
   const handleToggleQuestionInput = async () => {
     try {
-      const newEnabledState = !isQuestionInputEnabled;
+      const newEnabledState = false; // Only disabling, not toggling
       await toggleQuestionInput(sessionId, newEnabledState);
       setIsQuestionInputEnabled(newEnabledState);
+      setShowDisableQuestions(false); // Hide disable button after clicking
     } catch (err) {
       console.error("Error toggling question input:", err);
       alert("Failed to toggle question input.");
     }
   };
+
+
 
   return (
     <div className="admin-panel">
@@ -115,36 +122,38 @@ const AdminPanel = ({
         </button>
 
         <div className="admin-actions">
-          {!isQuestionsSorted && (
-            <button
-              type="button"
-              className="disable-q-btn"
-              onClick={handleToggleQuestionInput}
-              disabled={isEnding || isGenerating}
-            >
-              {isQuestionInputEnabled ? "Disable Questions" : "Enable Questions"}
-            </button>
-          )}
-          {!isQuestionsSorted && ( // Added conditional rendering here
-            <button
-              type="button"
-              className="sort-q-btn"
-              onClick={handleSortQuestions}
-              disabled={isEnding || isGenerating}
-            >
-              Sort Questions
-            </button>
-          )}
-
+        {showDisableQuestions && (
           <button
             type="button"
-            className="generate-report-button"
-            onClick={handleGenerateReport}
+            className="disable-q-btn"
+            onClick={handleToggleQuestionInput}
             disabled={isEnding || isGenerating}
           >
-            {isGenerating ? 'Generating...' : 'Generate Report'}
+            Disable Questions
           </button>
-        </div>
+        )}
+        {!showDisableQuestions && !isQuestionsSorted && (
+          <button
+            type="button"
+            className="sort-q-btn"
+            onClick={handleSortQuestions}
+            disabled={isEnding || isGenerating}
+          >
+            Disable Voting
+          </button>
+        )}
+        {!showDisableQuestions && !!isQuestionsSorted &&  (
+        <button
+          type="button"
+          className="generate-report-button"
+          onClick={handleGenerateReport}
+          disabled={isEnding || isGenerating}
+        >
+          {isGenerating ? 'Generating...' : 'Generate Report'}
+        </button>
+        )}
+
+      </div>
       </div>
 
       <div className="timer-controls">

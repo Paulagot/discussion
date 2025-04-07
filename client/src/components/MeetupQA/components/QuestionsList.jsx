@@ -166,7 +166,8 @@ const QuestionsList = ({
             <div className="question-text">{question.text}</div>
           )}
 
-          <div className="question-votes">
+<div className="question-votes">
+          {!isQuestionsSorted && (  // Only show vote button when questions aren't sorted
             <button
               type="button"
               className="vote-button"
@@ -178,19 +179,24 @@ const QuestionsList = ({
               }
             >
               <span className="vote-icon">↑</span>
-              <span>Vote ({question.votes})</span>
+              <span>Vote: ({question.votes})</span> {/* Just show vote count without "Vote" text */}
             </button>
-            
-            {onSetActive && (
-              <button 
-                type="button"
-                className="activate-button"
-                onClick={() => onSetActive(question.id)}
-                title="Set as active question"
-              >
-                Discuss
-              </button>
-            )}
+          )}
+          
+          {!!isQuestionsSorted && (  // Show vote count only when sorted
+            <span className="vote-count">({question.votes})</span>
+          )}
+          
+          {onSetActive && (
+            <button 
+              type="button"
+              className="activate-button"
+              onClick={() => onSetActive(question.id)}
+              title="Set as active question"
+            >
+              Discuss
+            </button>
+          )}
             
             {(onEdit && question.author === currentUser && editingQuestionId !== question.id) && (
               <button 
